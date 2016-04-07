@@ -363,3 +363,4 @@ def tests(test=True):
     print(float(calculate_fees(l, w, h, wt)) == 135.11)
     print(float(calculate_fees(l, w, h, wt)), '==', 135.11)
 
+
