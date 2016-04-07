@@ -1,3 +1,16 @@
+# run calculate_fees(
+#   length,
+#   width,
+#   height,
+#   unit_weight,
+#   is_apparel=False,
+#   is_media=False,
+#   is_pro=True
+# )
+# Also you can run tests() to perform the examples given on Amazon.
+#   *Not all those examples on Amazon are accurate.
+#
+
 import math
 from decimal import Decimal, ROUND_HALF_UP, ROUND_UP
 from numpy import median
@@ -95,34 +108,7 @@ def get_girth_and_length(length, width, height):
     )
     return Decimal(gl).quantize(Decimal("0.1"))
 
-def calculate_fees(length, width, height, unit_weight,
-                   is_apparel=False, is_media=False, is_pro=True):
-
-    dimensional_weight = get_dimensional_weight(length, width, height)
-    girth_length = get_girth_and_length(length, width, height)
-
-    standard_oversize = get_standard_or_oversize(length, width, height, unit_weight)
-
-    cubic_foot = get_cubic_foot(length, width, height)
-
-    size_tier = get_size_tier(standard_oversize, is_media, length,
-                              width, height, unit_weight, girth_length)
-
-
-    outbound = get_outbound_ship_weight(
-        unit_weight, dimensional_weight,
-        standard_oversize, is_media, size_tier
-    )
-
-    if is_media or standard_oversize == oversize:
-        order_handling = 0
-    else:
-        order_handling = 1
-    pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
-    weight_handling = get_weight_handling(size_tier, outbound, is_media).quantize(TWO_PLACES)
-    # thirty_day = get_30_day(standard_oversize, cubic_foot)
-    # This is not used by the fba_revenue calculator
-    thirty_day = 0
+def get_cost(pick_pack, weight_handling, thirty_day, order_handling, is_apparel, is_pro):
     costs = (
         normalize(pick_pack) +
         normalize(weight_handling) +
@@ -290,6 +276,46 @@ def get_weight_handling(size_tier, outbound, is_media=False):
                 (outbound - THRESHOLD['SML_OVER']) *
                 WEIGHT_HANDLING_MULTIPLIERS['SML_OVER']
             )
+
+def calculate_fees(length, width, height, unit_weight,
+                   is_apparel=False, is_media=False, is_pro=True):
+
+    dimensional_weight = get_dimensional_weight(
+        length, width, height
+    )
+    girth_length = get_girth_and_length(
+        length, width, height
+    )
+    standard_oversize = get_standard_or_oversize(
+        length, width, height, unit_weight
+    )
+    cubic_foot = get_cubic_foot(length, width, height)
+
+    size_tier = get_size_tier(
+        standard_oversize, is_media, length,
+        width, height, unit_weight, girth_length
+    )
+    outbound = get_outbound_ship_weight(
+        unit_weight, dimensional_weight,
+        standard_oversize, is_media, size_tier
+    )
+
+    if is_media or standard_oversize == oversize:
+        order_handling = 0
+    else:
+        order_handling = 1
+    pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
+    weight_handling = get_weight_handling(size_tier, outbound, is_media).quantize(TWO_PLACES)
+    # thirty_day = get_30_day(standard_oversize, cubic_foot)
+    # This is not used by the fba_revenue calculator
+    thirty_day = 0
+
+    costs = get_cost(
+        pick_pack, weight_handling, thirty_day,
+        order_handling, is_apparel, is_pro
+    )
+
+    return costs
 
 
 def tests(test=True):
