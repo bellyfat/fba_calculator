@@ -1,3 +1,6 @@
+# Amazon FBA Revenue Calculator
+# For how the fees are calculated see:
+#   https://services.amazon.com/fulfillment-by-amazon/pricing.htm
 # run calculate_fees(
 #   length,
 #   width,
@@ -7,9 +10,10 @@
 #   is_media=False,
 #   is_pro=True
 # )
-# Also you can run tests() to perform the examples given on Amazon.
-#   *Not all those examples on Amazon are accurate.
-#
+# Credit to hamptus for supplying me a base to work with.
+#   You can check out his current version here @
+#   github.com/hamptus/fbacalculator/blob/master/fbacalculator/
+
 
 import math
 from decimal import Decimal, ROUND_HALF_UP, ROUND_UP
@@ -75,9 +79,9 @@ oversize = "Oversize"
 
 def get_30_day(standard_oversize, cubic_foot):
     if standard_oversize == standard:
-        return Decimal('0.5525') * normalize(cubic_foot)
+        return Decimal('0.5525') * cubic_foot
     else:
-        return Decimal('0.4325') * normalize(cubic_foot)
+        return Decimal('0.4325') * cubic_foot
 
 def get_standard_or_oversize(length, width, height, weight):
     if any(
@@ -90,11 +94,6 @@ def get_standard_or_oversize(length, width, height, weight):
     ):
         return oversize
     return standard
-
-def normalize(data):
-    if type(data) != Decimal:
-        return Decimal(str(data))
-    return data
 
 def get_dimensional_weight(length, width, height):
     dw = Decimal(height * length * width) / Decimal(166.0)
@@ -110,10 +109,10 @@ def get_girth_and_length(length, width, height):
 
 def get_cost(pick_pack, weight_handling, thirty_day, order_handling, is_apparel, is_pro):
     costs = (
-        normalize(pick_pack) +
-        normalize(weight_handling) +
-        normalize(thirty_day) +
-        normalize(order_handling)
+        pick_pack +
+        weight_handling +
+        thirty_day +
+        order_handling
     )
 
     if is_apparel:
@@ -280,6 +279,19 @@ def get_weight_handling(size_tier, outbound, is_media=False):
 def calculate_fees(length, width, height, unit_weight,
                    is_apparel=False, is_media=False, is_pro=True):
 
+    try:
+        length = Decimal(length)
+        width = Decimal(width)
+        height = Decimal(height)
+        unit_weight = Decimal(unit_weight)
+    except:
+        print("""
+            Unable to convert items into a Decimal form.
+            Please provide either type int, float, str, or Decimal.
+                Invalid: length, width, height, or unit_weight."""
+        )
+        raise ValueError()
+
     dimensional_weight = get_dimensional_weight(
         length, width, height
     )
@@ -305,7 +317,9 @@ def calculate_fees(length, width, height, unit_weight,
     else:
         order_handling = 1
     pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
-    weight_handling = get_weight_handling(size_tier, outbound, is_media).quantize(TWO_PLACES)
+    weight_handling = get_weight_handling(
+        size_tier, outbound, is_media
+    ).quantize(TWO_PLACES)
     # thirty_day = get_30_day(standard_oversize, cubic_foot)
     # This is not used by the fba_revenue calculator
     thirty_day = 0
@@ -314,53 +328,9 @@ def calculate_fees(length, width, height, unit_weight,
         pick_pack, weight_handling, thirty_day,
         order_handling, is_apparel, is_pro
     )
-
     return costs
 
 
-def tests(test=True):
-    # The tests.
-    print("Testing Small Standard-Size Media")
-    l,w,h,wt = [5.6, 4.9, 0.4, 0.3]
-    print(float(calculate_fees(l, w, h, wt, is_media=True)) == 1.56)
-    print(float(calculate_fees(l, w, h, wt, is_media=True)), '==', 1.56)
 
-
-    print("Testing Large Standard-Size Media")
-    l,w,h,wt = [7.9, 5.1, 1, 0.7]
-    print(float(calculate_fees(l, w, h, wt, is_media=True)) == 1.91)
-    print(float(calculate_fees(l, w, h, wt, is_media=True)), '==', 1.91)
-
-
-    print("Testing Small Standard-Size Non-Media")
-    l,w,h,wt = [13.8, 9.0, 0.7, 0.7]
-    print(float(calculate_fees(l, w, h, wt)) == 2.56)
-    print(float(calculate_fees(l, w, h, wt)), '==', 2.56)
-
-    print("Testing Large Standard-Size Non-Media")
-    l,w,h,wt = [3.8, 3.7, 1.9, 0.3]
-    print(float(calculate_fees(l, w, h, wt)) == 3.02)
-    print(float(calculate_fees(l, w, h, wt)), '==', 3.02)
-
-    print("Testing Small Oversize")
-    l,w,h,wt = [15.7, 15.0, 0.4, 0.7]
-    print(float(calculate_fees(l, w, h, wt)) == 6.15)
-    print(float(calculate_fees(l, w, h, wt)), '==', 6.15)
-
-    print("Testing Medium Oversize")
-    l,w,h,wt = [63.0, 11.6, 6.3, 46.6]
-    print(float(calculate_fees(l, w, h, wt)) == 25.87)
-    print(float(calculate_fees(l, w, h, wt)), '==', 25.87)
-
-    print("Testing Large Oversize")
-    l,w,h,wt = [50.3, 30.0, 15.0, 146.0]
-    print(float(calculate_fees(l, w, h, wt)) == 117.98)
-    print(float(calculate_fees(l, w, h, wt)), '==', 117.98)
-
-    print("Testing Special Oversize")
-    print("This example is wrong on Amazon. Should be a Large Oversize.")
-    l,w,h,wt = [51.6, 35.6, 19.0, 53.5]
-    print(float(calculate_fees(l, w, h, wt)) == 135.11)
-    print(float(calculate_fees(l, w, h, wt)), '==', 135.11)
 
 
