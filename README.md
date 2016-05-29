@@ -26,13 +26,13 @@ Amazon FBA Revenue Calculator allows you to get the Amazon fees associated with 
 
 ##Sample
 ####Here is a sample request
-https://ocwpmnb46i.execute-api.us-west-2.amazonaws.com/beta/api/v1/fba-revenue-calculator?unit_weight=0.15&pro=False&width=0.6&media=True&height=7.5&apparel=False&length=5.3
+	https://ocwpmnb46i.execute-api.us-west-2.amazonaws.com/beta/api/v1/fba-revenue-calculator?unit_weight=0.15&pro=False&width=0.6&media=True&height=7.5&apparel=False&length=5.3
 
 ####Here is the response
-{'cost': 2.56}
+	{'cost': 2.56}
 
 ##Testing
-python test.py
+	`python test.py`
 
 ###TODO
 1. Currently the large standard media fails.
