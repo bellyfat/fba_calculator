@@ -10,15 +10,16 @@ Required Parameters:
 	-height
 	-weight
 
-#Here is a sample request
+##Sample
+###Here is a sample request
 https://ocwpmnb46i.execute-api.us-west-2.amazonaws.com/beta/api/v1/fba-revenue-calculator?unit_weight=0.15&pro=False&width=0.6&media=True&height=7.5&apparel=False&length=5.3
 
-#Here is the response
+###Here is the response
 {'cost': 2.56}
 
-#Testing
+##Testing
 python test.py
 
-#TODO
-*Currently the large standard media fails.
-*Currently the special oversized fails because a misdescription on Amazon's sample page.
+###TODO
+1. Currently the large standard media fails.
+2. Currently the special oversized fails because a misdescription on Amazon's sample page.
