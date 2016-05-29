@@ -32,7 +32,7 @@ Amazon FBA Revenue Calculator allows you to get the Amazon fees associated with 
 	{'cost': 2.56}
 
 ##Testing
-	`python test.py`
+	python test.py
 
 ###TODO
 1. Currently the large standard media fails.
