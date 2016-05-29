@@ -2,7 +2,7 @@
 Amazon FBA Revenue Calculator allows you to get the Amazon fees associated with your product when selling FBA.
 
 You can use this at the following url:
----
+--
 https://ocwpmnb46i.execute-api.us-west-2.amazonaws.com/beta/api/v1/fba-revenue-calculator?
 
 Required Parameters:
@@ -12,11 +12,8 @@ Required Parameters:
 	-weight
 
 ##Limits
-Use appropriately
----
-200 requests a second
----
-500 burst requests a second
+1. 200 requests a second
+2. 500 burst requests a second
 
 ##Sample
 ####Here is a sample request
