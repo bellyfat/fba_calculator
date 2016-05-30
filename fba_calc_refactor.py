@@ -40,14 +40,22 @@ classes
 """
 
 def median(alist):
+    """Numpy can perform this task. But that is the only 
+    numpy functionality we need. So I createed it and
+    removed the dependency.
+    
+    Args:
+        :list alist: a list of float compatible values.
+    Return:
+        :float median: median of `alist`
+    """
     alist.sort()
-    sortedlist = alist
-    n = len(sortedlist)
-    mid = n/2
+    n = len(alist)
+    mid = math.ciel(n/2)
     if (n % 2) == 0: 
-        mid2 = n/2 - 1
-        return (sortedlist[mid] + sortedlist[mid2])/2.0
-    return  sortedlist[mid]
+        mid2 = mid - 1
+        return (alist[mid] + alist[mid2])/2.0
+    return  alist[mid]
 
 
 class Product(object):
