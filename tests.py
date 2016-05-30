@@ -3,7 +3,6 @@
 #   https://services.amazon.com/fulfillment-by-amazon/pricing.htm
 
 from fba_calc import calculate_fees
-<<<<<<< HEAD
 import unittest
 
 
