@@ -62,5 +62,11 @@ class TestingProduct(unittest.TestCase):
     def test_standard_or_oversize(self):
         pass
 
+class TestMedian(unittest.TestCase):
+
+
+    def test_media(self):
+        
+
 if __name__ == '__main__':
     unittest.main()

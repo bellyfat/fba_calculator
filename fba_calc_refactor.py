@@ -70,7 +70,7 @@ class Product(object):
         self._is_media = is_media
         self._is_apparel = is_apparel
         self._is_pro = is_pro
-        self._size = self.standard_or_oversize()
+        self._size = self._standard_or_oversize()
 
     def _decimal(self, num):
         try:
@@ -78,7 +78,7 @@ class Product(object):
         except:
             raise TypeError("Please provide Decimal compatible values.")
 
-    def standard_or_oversize():
+    def _standard_or_oversize():
         if any(
             [(weight > 20),
             (max(self.length, self.width, self.height) > 18),
@@ -117,6 +117,11 @@ class Product(object):
     @property
     def is_pro(self):
         return self._is_pro
+
+    @property
+    def size(self):
+        return self._size
+    
 
 
 
