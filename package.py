@@ -14,31 +14,27 @@
 #   You can check out his current version here @
 #   github.com/hamptus/fbacalculator/blob/master/fbacalculator/
 
-
 import math
 import logging
 from numpy import median
 from abc import ABCMeta, abstractmethod, abstractproperty
 from decimal import Decimal, ROUND_HALF_UP, ROUND_UP
 
-"""Structure
-
-classes
+"""classes
     abstract Package
         abstract Media
         - SmallStandardMedia
-        - LargeStandardMediaOne
-        - LargeStandardMediaTwo
-        abstra NonMedia
+        - LargeStandardMedia
+        - XLargeStandardMedia
+        abstra Standard
         - SmallStandardNonMedia
-        - LargeStandardNonMediaOne
-        - LargeStandardNonMediaTwo
+        - LargeStandardNonMedia
+        - XLargeStandardNonMedia
         abstract Oversize
         - SmallOversize
         - MediumOversize
         - LargeOversize
         - SpecialOversize
-    - Product
 """
 
 def size(length, width, height, weight):
@@ -68,6 +64,7 @@ def size(length, width, height, weight):
 
 class Package(metaclass=ABCMeta):
 
+    TWO_PLACES = Decimal("0.01")
 
     def __init__(self, height, length, width, weight, size,
                   is_media=False, is_apparel=False, is_pro=False):
@@ -96,8 +93,12 @@ class Package(metaclass=ABCMeta):
         except:
             raise TypeError("Please provide Decimal compatible values.")
 
+    @abstractmethod
+    def thirtyday(standard_oversize, cubic_foot):
+        raise NotImplementedError
+
     @staticmethod
-    def sizing(length, width, height, weight):
+    def size(length, width, height, weight):
         """Determine if the package is standard or oversize.
 
         Args
@@ -120,16 +121,12 @@ class Package(metaclass=ABCMeta):
             size = "Oversize"
         return size
 
-    @abstractmethod
-    def thirtyday(standard_oversize, cubic_foot):
-        raise NotImplementedError
-
     @staticmethod
     def cubic_foot(length, width, height):
         return Decimal(length * width * height) / Decimal('1728.0')
 
     @staticmethod
-    def girth_and_length(length, width, height):
+    def girth(length, width, height):
         gl = (
             max(length, width, height) +
             (median([length, width, height]) * 2) +
@@ -137,11 +134,11 @@ class Package(metaclass=ABCMeta):
         )
         return Decimal(gl).quantize(Decimal("0.1"))
 
-    @staticmethod
-    def dimensional_weight(length, width, height):
+    @classmethod
+    def dimensional_weight(cls, length, width, height):
         dimensional_weight = Decimal(
             height * length * width) / Decimal(166.0)
-        return Decimal(dimensional_weight).quantize(TWO_PLACES)
+        return Decimal(dimensional_weight).quantize(cls.TWO_PLACES)
 
     @property
     def height(self):
@@ -166,7 +163,6 @@ class Package(metaclass=ABCMeta):
     @property
     def is_apparel(self):
         return self._is_apparel
-    
 
     @property
     def is_pro(self):
