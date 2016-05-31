@@ -1,9 +1,12 @@
 # Run tests on the samples given by Amazon
 # TODO: Add samples from
 #   https://services.amazon.com/fulfillment-by-amazon/pricing.htm
-
-from fba_calc import calculate_fees
 import unittest
+from decimal import Decimal
+from fba_calc import calculate_fees, median
+from fba_calc_refactor import Package
+
+
 
 
 class TestingPackages(unittest.TestCase):
@@ -53,20 +56,22 @@ class TestingPackages(unittest.TestCase):
         package = float(calculate_fees(l, w, h, wt, is_media=False))
         self.assertEqual(package, 135.11)
 
-class TestingProduct(unittest.TestCase):
+class TestingPackage(unittest.TestCase):
 
+    def test_decimal(self):
+         self.assertRaises(TypeError, Package.decimal, None)
+         self.assertRaises(TypeError, Package.decimal, 'Twentyfour')
 
-    def test__decimal(self):
-        pass
-
-    def test_standard_or_oversize(self):
-        pass
-
-class TestMedian(unittest.TestCase):
-
-
-    def test_media(self):
-        
+    def test_size(self):
+        l,w,h,wt = [6.93, 6, 0.6, 0.53]
+        self.assertTrue(Package.sizing(l,w,h,wt), "Standard")
+        l,w,h,wt = [63.0, 11.6, 6.3, 46.6]
+        self.assertTrue(Package.sizing(l,w,h,wt), "Oversizing")
+        # We don't care if they provide measurements < 0
+        l,w,h,wt = [0,0,0,0]
+        self.assertTrue(Package.sizing(l,w,h,wt), "Standard")
+        l,w,h,wt = [-1,-2,-3.5,-5]
+        self.assertTrue(Package.sizing(l,w,h,wt), "Standard")
 
 if __name__ == '__main__':
     unittest.main()

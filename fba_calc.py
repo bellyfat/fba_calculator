@@ -35,10 +35,12 @@ classes
 
 import math
 from decimal import Decimal, ROUND_HALF_UP, ROUND_UP
+from numpy import median
 
 
 TWO_PLACES = Decimal("0.01")
 
+#check
 PICK_PACK = {
     "Standard": Decimal("1.06"),
     "SML_OVER": Decimal("4.09"),
@@ -46,6 +48,7 @@ PICK_PACK = {
     "LRG_OVER": Decimal("8.40"),
     "SPL_OVER": Decimal("10.53"),
 }
+#check
 PACKAGE_WEIGHT = {
     "STND_MEDIA": Decimal(0.125),
     "STND_NON_SM": Decimal(0.25),
@@ -53,6 +56,7 @@ PACKAGE_WEIGHT = {
     "OVER": Decimal(1.00),
     "SPECIAL": Decimal(1.00),
 }
+
 WEIGHT_HANDLING = {
     "SML_STND_MEDIA": Decimal('0.50'),
     "LRG_STND_MEDIA_1": Decimal('0.85'),
@@ -65,6 +69,7 @@ WEIGHT_HANDLING = {
     "LRG_OVER": Decimal('63.98'),
     "SPL_OVER": Decimal('124.58'),
 }
+
 WEIGHT_HANDLING_MULTIPLIERS = {
     "LRG_STND_MEDIA_2": Decimal('0.41'),
     "LRG_STND_NON_2": Decimal('0.39'),
@@ -93,13 +98,14 @@ SML_OVER = "SML_OVER"
 standard = "Standard"
 oversize = "Oversize"
 
-
+#check thirtyday
 def get_30_day(standard_oversize, cubic_foot):
     if standard_oversize == standard:
         return Decimal('0.5525') * cubic_foot
     else:
         return Decimal('0.4325') * cubic_foot
 
+# needs to be implemented by the client
 def get_standard_or_oversize(length, width, height, weight):
     if any(
         [
@@ -112,10 +118,12 @@ def get_standard_or_oversize(length, width, height, weight):
         return oversize
     return standard
 
+#check
 def get_dimensional_weight(length, width, height):
     dw = Decimal(height * length * width) / Decimal(166.0)
     return Decimal(dw).quantize(TWO_PLACES)
 
+#check
 def get_girth_and_length(length, width, height):
     gl = (
         max(length, width, height) +
@@ -123,6 +131,11 @@ def get_girth_and_length(length, width, height):
         (min(length, width, height) * 2)
     )
     return Decimal(gl).quantize(Decimal("0.1"))
+
+#check
+def get_cubic_foot(length, width, height):
+    return Decimal(length * width * height) / Decimal('1728.0')
+
 
 def get_cost(pick_pack, weight_handling, thirty_day, order_handling, is_apparel, is_pro):
     costs = (
@@ -227,9 +240,6 @@ def get_outbound_ship_weight(unit_weight, dimensional_weight,
                 )
     return outbound.quantize(Decimal('0'), rounding=ROUND_UP)
 
-def get_cubic_foot(length, width, height):
-    return Decimal(length * width * height) / Decimal('1728.0')
-
 def get_weight_handling(size_tier, outbound, is_media=False):
     if size_tier == SML_STND:
         return WEIGHT_HANDLING['SML_STND_NON']
@@ -308,16 +318,19 @@ def calculate_fees(length, width, height, unit_weight,
                 Invalid: length, width, height, or unit_weight."""
         )
         raise ValueError()
-
+    #done
     dimensional_weight = get_dimensional_weight(
         length, width, height
     )
+    #done
     girth_length = get_girth_and_length(
         length, width, height
     )
+    #done
     standard_oversize = get_standard_or_oversize(
         length, width, height, unit_weight
     )
+    #done
     cubic_foot = get_cubic_foot(length, width, height)
 
     size_tier = get_size_tier(
@@ -328,11 +341,12 @@ def calculate_fees(length, width, height, unit_weight,
         unit_weight, dimensional_weight,
         standard_oversize, is_media, size_tier
     )
-
+    #done
     if is_media or (standard_oversize == oversize):
         order_handling = 0
     else:
         order_handling = 1
+
     pick_pack = PICK_PACK.get(standard_oversize, PICK_PACK.get(size_tier))
     weight_handling = get_weight_handling(
         size_tier, outbound, is_media
@@ -346,26 +360,6 @@ def calculate_fees(length, width, height, unit_weight,
         order_handling, is_apparel, is_pro
     )
     return costs
-
-
-def median(alist):
-    """Numpy can perform this task. But that is the only 
-    numpy functionality we need. So I createed it and
-    remove the dependency.
-    
-    Args:
-        :list alist: a list of float compatible values.
-    Return:
-        :float median: median of `alist`
-    """
-    alist.sort()
-    sortedlist = alist
-    n = len(sortedlist)
-    mid = int(n/2)
-    if (n % 2) == 0: 
-        mid2 = int(n/2 - 1)
-        return (sortedlist[mid] + sortedlist[mid2])/2.0
-    return  sortedlist[mid]
 
 
 

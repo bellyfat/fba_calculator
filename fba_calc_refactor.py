@@ -16,7 +16,9 @@
 
 
 import math
-from abc import ABCMeta, abstractmethod
+import logging
+from numpy import median
+from abc import ABCMeta, abstractmethod, abstractproperty
 from decimal import Decimal, ROUND_HALF_UP, ROUND_UP
 
 """Structure
@@ -39,29 +41,35 @@ classes
     - Product
 """
 
-def median(alist):
-    """Numpy can perform this task. But that is the only 
-    numpy functionality we need. So I createed it and
-    removed the dependency.
-    
-    Args:
-        :list alist: a list of float compatible values.
+def size(length, width, height, weight):
+    """Determine if the package is standard or oversize.
+
+    Args
+        :length Decimal: length of package
+        :width Decimal: width of package
+        :height Decimal: height of package
+        :weight Decimal: weight of package
     Return:
-        :float median: median of `alist`
+        :size str: amazon size of package. "Oversize" or "Standard"
     """
-    alist.sort()
-    n = len(alist)
-    mid = math.ciel(n/2)
-    if (n % 2) == 0: 
-        mid2 = mid - 1
-        return (alist[mid] + alist[mid2])/2.0
-    return  alist[mid]
+    size = "Standard"
+    if any(
+        [
+            (weight > 20),
+            (max(length, width, height) > 18),
+            (min(length, width, height) > 8),
+            (median([length, width, height]) > 14)
+        ]
+    ):
+        size = "Oversize"
+    return size
 
 
-class Product(object):
+
+class Package(metaclass=ABCMeta):
 
 
-    self __init__(self, height, length, width, weight, 
+    def __init__(self, height, length, width, weight, size,
                   is_media=False, is_apparel=False, is_pro=False):
         self._height = self._decimal(height)
         self._length = self._decimal(length)
@@ -70,23 +78,70 @@ class Product(object):
         self._is_media = is_media
         self._is_apparel = is_apparel
         self._is_pro = is_pro
-        self._size = self._standard_or_oversize()
 
-    def _decimal(self, num):
+
+    @staticmethod
+    def decimal(num):
+        """Tries to convert `num` to Decimal
+
+        Args:
+            :num Decimal Compatible: 
+                a number to be converted to Decimal
+
+        Returns:
+            :Decimal(num):
+        """
         try:
             return Decimal(num)
         except:
             raise TypeError("Please provide Decimal compatible values.")
 
-    def _standard_or_oversize():
+    @staticmethod
+    def sizing(length, width, height, weight):
+        """Determine if the package is standard or oversize.
+
+        Args
+            :length Decimal: length of package
+            :width Decimal: width of package
+            :height Decimal: height of package
+            :weight Decimal: weight of package
+        Return:
+            :size str: amazon size of package. "Oversize" or "Standard"
+        """
+        size = "Standard"
         if any(
-            [(weight > 20),
-            (max(self.length, self.width, self.height) > 18),
-            (min(self.length, self.width, self.height) > 8),
-            (median([self.length, self.width, self.height]) > 14)]
+            [
+                (weight > 20),
+                (max(length, width, height) > 18),
+                (min(length, width, height) > 8),
+                (median([length, width, height]) > 14)
+            ]
         ):
-            return "Oversize"
-        return "Standard"
+            size = "Oversize"
+        return size
+
+    @abstractmethod
+    def thirtyday(standard_oversize, cubic_foot):
+        raise NotImplementedError
+
+    @staticmethod
+    def cubic_foot(length, width, height):
+        return Decimal(length * width * height) / Decimal('1728.0')
+
+    @staticmethod
+    def girth_and_length(length, width, height):
+        gl = (
+            max(length, width, height) +
+            (median([length, width, height]) * 2) +
+            (min(length, width, height) * 2)
+        )
+        return Decimal(gl).quantize(Decimal("0.1"))
+
+    @staticmethod
+    def dimensional_weight(length, width, height):
+        dimensional_weight = Decimal(
+            height * length * width) / Decimal(166.0)
+        return Decimal(dimensional_weight).quantize(TWO_PLACES)
 
     @property
     def height(self):
@@ -99,7 +154,6 @@ class Product(object):
     @property
     def width(self):
         return self._width
-    
     
     @property
     def weight(self):
@@ -118,122 +172,319 @@ class Product(object):
     def is_pro(self):
         return self._is_pro
 
-    @property
-    def size(self):
-        return self._size
-    
-
-
-
-class Package(metaclass=ABCMeta):
-
-
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def get_30_day(standard_oversize, cubic_foot):
-        raise NotImplementedError
-
-
 
 
 class StandardPackage(Package):
 
-    def __init__(self):
+    def __init__(self, package_type):
+        super(StandardPackage, self).__init__()
         self._pick_pack = Decimal("1.06")
+        self._size = "Standard"
+
+    
+    def thirtyday(self):
+        return Decimal('0.5525') * self._cubic_foot()
+
+    @property
+    def pick_pack(self):
+        return self._pick_pack    
+    
+
+
+class StandardPackageNonMedia(StandardPackage):
+
+    def __init__(self):
+        super(StandardNonPackage, self).__init__()
+        self._order_handling = 0
+        self._package_weight = Package._decimal("0.25")
+
+    @property
+    def order_handling(self):
+        return self._order_handling
+    
+
+class SmallStandardNonMedia(StandardPackageNonMedia):
+
+    def __init__(self):
+        self._weight_handling = Decimal("0.50")
+        self._package_type = "SmallStandardNonMedia"
+
+    @property
+    def package_type(self):
+        return self._package_type
+    
+
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+
+
+class LargeStandardNonMedia(StandardPackage):
+
+    def __init__(self):
+        self._weight_handling = Decimal("0.96")
+        self._package_type = "LargeStandardNonMedia"
+
+    @property
+    def package_type(self):
+        return self._package_type
+    
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+
+
+class XLargeStandardNonMedia(StandardPackage):
+
+    def __init__(self):
+        self._weight_handling = Decimal("1.95")
+        self._weight_handling_multiplier = Decimal("0.39")
+        self._threshold = Decimal("2")
+        self._package_type = "XLargeStandardNonMedia"
+
+    @property
+    def package_type(self):
+        return self._package_type
+    
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+    
+    @property
+    def weight_handling_multiplier(self):
+        return self._weight_handling_multiplier
+
+    @property
+    def threshold(self):
+        return self._threshold
+    
+    
+
+
+class MediaPackage(StandardPackage):
+
+    def __init__(self):
+        super(MediaPackage, self).__init__()
+        self._order_handling = 0
+        self._package_weight = Package._decimal("0.125")
+
+    @property
+    def order_handling(self):
+        return self._order_handling
+
+    @abstractproperty
+    def weight_handling(self):
+        return self._weight_handling
+
+
+class SmallStandardMedia(MediaPackage):
+
+    def __init__(self):
+        self._weight_handling = Decimal("0.50")
+        self._package_type = "SmallStandardMedia"
+
+    @property
+    def package_type(self):
+        return self._package_type
+
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+
+class LargeStandardMedia(StandardPackage):
+
+    def __init__(self):
+        self._weight_handling = Decimal("0.85")
+        self._package_type = "LargeStandardMedia"
+
+    @property
+    def package_type(self):
+        return self._package_type
+
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+
+
+class XLargeStandardMedia(StandardPackage):
+
+    def __init__(self):
+        self._weight_handling = Decimal("1.24")
+        self._weight_handling_multiplier = Decimal("0.41"),
+        self._threshold = Decimal("2")
+        self._package_type = "XLargeStandardMedia"
+
+    @property
+    def package_type(self):
+        return self._package_type
+
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+    
+    @property
+    def weight_handling_multiplier(self):
+        return self._weight_handling_multiplier
+ 
+
+class OversizePackage(Package):
+
+    def __init__(self):
+        self._order_handling = Decimal("0")
+        self._size = "Oversize"
+        self._package_weight = Package._decimal("1.00")
+        super(OversizePackage, self).__init__()
+
+    def thirtyday(self):
+        return Decimal('0.4325') * self._cubic_foot()
+    
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def order_handling(self):
+        return self._order_handling
         
+    @property
+    def package_weight(self):
+        return self._package_weight
 
-class SmallStandard(StandardPackage):
+    @abstractproperty
+    def pick_pack(self):
+        pass
 
-    def __init__(self):
-        self._package_weight = Decimal(0.25)
-        self._weight_handling = Decimal(0.50)
+    @abstractproperty
+    def weight_handling(self):
+        pass
+    
+    @abstractproperty
+    def weight_handling_multiplier(self):
+        pass
 
+    @abstractproperty
+    def threshold(self):
+        pass
 
-class SmallStandardMedia(StandardPackage):
-
-    def __init__(self):
-        self._package_weight = Decimal(0.125)
-        self._weight_handling = Decimal(0.50)
-
-
-class LargeStandardOne(StandardPackage):
-
-    def __init__(self):
-        self._package_weight = Decimal(0.125)
-        self._weight_handling = Decimal(0.50)
-
-class LargeStandardTwo(StandardPackage):
-
-    def __init__(self):
-        self._package_weight = Decimal(0.125)
-        self._weight_handling = Decimal(0.50)
-
-
-class LargeStandardMediaOne(StandardPackage):
+class SmallOversizePackage(OversizePackage):
 
     def __init__(self):
-        self._package_weight = Decimal(0.125)
-        self._weight_handling = Decimal(0.50)
+        self._pick_pack = Decimal("4.09")
+        self._weight_handling = Decimal("2.06")
+        self._weight_handling_multiplier = Decimal("0.39")
+        self._threshold = Decimal("2")
+        super(SmallOversizePackage, self).__init__()
+        self._package_type = "SmallOversizePackage"
 
+    @property
+    def package_type(self):
+        return self._package_type
 
-class LargeStandardMediaTwo(StandardPackage):
+    @property
+    def pick_pack(self):
+        return self._pick_pack
+    
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+    
+    @property
+    def weight_handling_multiplier(self):
+        return self._weight_handling_multiplier
+
+    @property
+    def threshold(self):
+        return self._threshold
+    
+class MediumOversizePackage(OversizePackage):
 
     def __init__(self):
-        self._package_weight = Decimal(0.125)
-        self._weight_handling = Decimal(0.50)
+        self._pick_pack = Decimal("5.20")
+        self._weight_handling = Decimal("2.73")
+        self._weight_handling_multiplier = Decimal("0.39")
+        self._threshold = Decimal("2")
+        super(MediumOversizePackage, self).__init__()
+        self._package_type = "MediumOversizePackage"
+
+    @property
+    def package_type(self):
+        return self._package_type
+
+    @property
+    def pick_pack(self):
+        return self._pick_pack
+    
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+    
+    @property
+    def weight_handling_multiplier(self):
+        return self._weight_handling_multiplier
+
+    @property
+    def threshold(self):
+        return self._threshold
+
+class LargeOversizePackage(OversizePackage):
+
+    def __init__(self):
+        self._pick_pack = Decimal("8.40")
+        self._weight_handling = Decimal("63.98")
+        self._weight_handling_multiplier = Decimal("0.80")
+        self._threshold = Decimal("90")
+        super(LargeOversizePackage, self).__init__()
+        self._package_type = "LargeOversizePackage"
+
+    @property
+    def package_type(self):
+        return self._package_type
+
+    @property
+    def pick_pack(self):
+        return self._pick_pack
+    
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+    
+    @property
+    def weight_handling_multiplier(self):
+        return self._weight_handling_multiplier
+
+    @property
+    def threshold(self):
+        return self._threshold
 
 
-PICK_PACK = {
-    "Standard": Decimal("1.06"),
-    "SML_OVER": Decimal("4.09"),
-    "MED_OVER": Decimal("5.20"),
-    "LRG_OVER": Decimal("8.40"),
-    "SPL_OVER": Decimal("10.53"),
-}
-PACKAGE_WEIGHT = {
-    "STND_MEDIA": 0.125,
-    "STND_NON_SM": 0.25,
-    "STND_NON_LG": 0.25,
-    "OVER": 1.00,
-    "SPECIAL": 1.00,
-}
-WEIGHT_HANDLING = {
-    "SML_STND_MEDIA": Decimal('0.50'),
-    "LRG_STND_MEDIA_1": Decimal('0.85'),
-    "LRG_STND_MEDIA_2": Decimal('1.24'),
-    "SML_STND_NON": Decimal('0.50'),
-    "LRG_STND_NON_1": Decimal('0.96'),
-    "LRG_STND_NON_2": Decimal('1.95'),
-    "SML_OVER": Decimal('2.06'),
-    "MED_OVER": Decimal('2.73'),
-    "LRG_OVER": Decimal('63.98'),
-    "SPL_OVER": Decimal('124.58'),
-}
-WEIGHT_HANDLING_MULTIPLIERS = {
-    "LRG_STND_MEDIA_2": Decimal('0.41'),
-    "LRG_STND_NON_2": Decimal('0.39'),
-    "SML_OVER": Decimal('0.39'),
-    "MED_OVER": Decimal('0.39'),
-    "LRG_OVER": Decimal('0.80'),
-    "SPL_OVER": Decimal('0.92'),
-}
+class SpecialOversizePackage(OversizePackage):
 
-THRESHOLD = {
-    "LRG_STND_MEDIA_2": 2,
-    "LRG_STND_NON_2": 2,
-    "SML_OVER": 2,
-    "MED_OVER": 2,
-    "LRG_OVER": 90,
-    "SPL_OVER": 90,
-}
-SML_STND = "SML_STND"
-LRG_STND = "LRG_STND"
-SPL_OVER = "SPL_OVER"
-LRG_OVER = "LRG_OVER"
-MED_OVER = "MED_OVER"
-SML_OVER = "SML_OVER"
+    def __init__(self):
+        self._pick_pack = Decimal("10.53")
+        self._weight_handling = Decimal("124.58")
+        self._weight_handling_multiplier = Decimal("0.92")
+        self._threshold = Decimal("90")
+        super(SpecialOversizePackage, self).__init__()
+        self._package_type = "SpecialOversizePackage"
 
-standard = "Standard"
-oversize = "Oversize"
+    @property
+    def package_type(self):
+        return self._package_type
+
+    @property
+    def pick_pack(self):
+        return self._pick_pack
+    
+    @property
+    def weight_handling(self):
+        return self._weight_handling
+    
+    @property
+    def weight_handling_multiplier(self):
+        return self._weight_handling_multiplier
+
+    @property
+    def threshold(self):
+        return self._threshold
+
+ 
