@@ -3,7 +3,7 @@
 #   https://services.amazon.com/fulfillment-by-amazon/pricing.htm
 import unittest
 from decimal import Decimal
-from fba_calc import calculate_fees, median
+from fbacalculator import calculate_fees, median
 from fba_calc_refactor import Package
 
 

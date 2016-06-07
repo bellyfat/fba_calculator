@@ -50,18 +50,5 @@ def get_outbound_ship_weight(unit_weight, dimensional_weight,
 
 
 
-def get_cost(pick_pack, weight_handling, thirty_day, order_handling, is_apparel, is_pro):
-    costs = (
-        pick_pack +
-        weight_handling +
-        thirty_day +
-        order_handling
-    )
 
-    if is_apparel:
-        costs += 0.40
-
-    if not is_pro:
-        costs += 1.0
-    return costs.quantize(TWO_PLACES)
 

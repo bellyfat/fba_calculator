@@ -66,7 +66,7 @@ class Package(metaclass=ABCMeta):
 
     TWO_PLACES = Decimal("0.01")
 
-    def __init__(self, height, length, width, weight, size,
+    def __init__(self, height, length, width, weight,
                   is_media=False, is_apparel=False, is_pro=False):
         self._height = self._decimal(height)
         self._length = self._decimal(length)
@@ -94,8 +94,8 @@ class Package(metaclass=ABCMeta):
             raise TypeError("Please provide Decimal compatible values.")
 
     @abstractmethod
-    def thirtyday(standard_oversize, cubic_foot):
-        raise NotImplementedError
+    def thirtyday(standard_oversize):
+        pass
 
     @staticmethod
     def size(length, width, height, weight):
@@ -122,23 +122,24 @@ class Package(metaclass=ABCMeta):
         return size
 
     @staticmethod
-    def cubic_foot(length, width, height):
-        return Decimal(length * width * height) / Decimal('1728.0')
+    def cubicfoot(length, width, height):
+        cubicfoot = Decimal(length * width * height) / Decimal('1728.0')
+        return cubicfoot
 
     @staticmethod
     def girth(length, width, height):
-        gl = (
+        girth = (
             max(length, width, height) +
             (median([length, width, height]) * 2) +
-            (min(length, width, height) * 2)
-        )
-        return Decimal(gl).quantize(Decimal("0.1"))
+            (min(length, width, height) * 2))
+        return Decimal(girth).quantize(Decimal("0.1"))
 
     @classmethod
     def dimensional_weight(cls, length, width, height):
-        dimensional_weight = Decimal(
-            height * length * width) / Decimal(166.0)
-        return Decimal(dimensional_weight).quantize(cls.TWO_PLACES)
+        dimensional_weight = (
+            Decimal(height * length * width) / Decimal(166.0)
+            ).quantize(cls.TWO_PLACES)
+        return dimensional_weight
 
     @property
     def height(self):
@@ -169,17 +170,30 @@ class Package(metaclass=ABCMeta):
         return self._is_pro
 
 
+class MockPackage(Package):
+
+    def __init__(self, height, length, width, weight,
+                 is_media=False, is_apparel=False, is_pro=False):
+        super(StandardPackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
+
+
 
 class StandardPackage(Package):
 
-    def __init__(self, package_type):
-        super(StandardPackage, self).__init__()
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(StandardPackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._pick_pack = Decimal("1.06")
         self._size = "Standard"
 
     
     def thirtyday(self):
-        return Decimal('0.5525') * self._cubic_foot()
+        return Decimal('0.5525') * self.cubicfoot(self.length, 
+            self.width, self.height)
 
     @property
     def pick_pack(self):
@@ -189,8 +203,11 @@ class StandardPackage(Package):
 
 class StandardPackageNonMedia(StandardPackage):
 
-    def __init__(self):
-        super(StandardNonPackage, self).__init__()
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(StandardPackageNonMedia, self).__init__(
+            height, length, width, weight, 
+            is_media=False, is_apparel=False, is_pro=False)
         self._order_handling = 0
         self._package_weight = Package._decimal("0.25")
 
@@ -201,7 +218,11 @@ class StandardPackageNonMedia(StandardPackage):
 
 class SmallStandardNonMedia(StandardPackageNonMedia):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(SmallStandardNonMedia, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._weight_handling = Decimal("0.50")
         self._package_type = "SmallStandardNonMedia"
 
@@ -217,7 +238,11 @@ class SmallStandardNonMedia(StandardPackageNonMedia):
 
 class LargeStandardNonMedia(StandardPackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(LargeStandardNonMedia, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._weight_handling = Decimal("0.96")
         self._package_type = "LargeStandardNonMedia"
 
@@ -232,14 +257,19 @@ class LargeStandardNonMedia(StandardPackage):
 
 class XLargeStandardNonMedia(StandardPackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(XLargeStandardNonMedia, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._weight_handling = Decimal("1.95")
         self._weight_handling_multiplier = Decimal("0.39")
         self._threshold = Decimal("2")
         self._package_type = "XLargeStandardNonMedia"
 
     @property
-    def package_type(self):
+    def package_type(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
         return self._package_type
     
     @property
@@ -253,16 +283,18 @@ class XLargeStandardNonMedia(StandardPackage):
     @property
     def threshold(self):
         return self._threshold
-    
-    
 
 
 class MediaPackage(StandardPackage):
 
-    def __init__(self):
-        super(MediaPackage, self).__init__()
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(MediaPackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._order_handling = 0
         self._package_weight = Package._decimal("0.125")
+        
 
     @property
     def order_handling(self):
@@ -275,9 +307,14 @@ class MediaPackage(StandardPackage):
 
 class SmallStandardMedia(MediaPackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(SmallStandardMedia, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._weight_handling = Decimal("0.50")
         self._package_type = "SmallStandardMedia"
+        
 
     @property
     def package_type(self):
@@ -289,9 +326,14 @@ class SmallStandardMedia(MediaPackage):
 
 class LargeStandardMedia(StandardPackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(LargeStandardMedia, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._weight_handling = Decimal("0.85")
         self._package_type = "LargeStandardMedia"
+        
 
     @property
     def package_type(self):
@@ -304,11 +346,16 @@ class LargeStandardMedia(StandardPackage):
 
 class XLargeStandardMedia(StandardPackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(XLargeStandardMedia, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._weight_handling = Decimal("1.24")
         self._weight_handling_multiplier = Decimal("0.41"),
         self._threshold = Decimal("2")
         self._package_type = "XLargeStandardMedia"
+        
 
     @property
     def package_type(self):
@@ -325,14 +372,18 @@ class XLargeStandardMedia(StandardPackage):
 
 class OversizePackage(Package):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(OversizePackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._order_handling = Decimal("0")
         self._size = "Oversize"
         self._package_weight = Package._decimal("1.00")
-        super(OversizePackage, self).__init__()
-
+        
     def thirtyday(self):
-        return Decimal('0.4325') * self._cubic_foot()
+        return Decimal('0.4325') * self.cubicfoot(self.length, 
+            self.width, self.height)
     
     @property
     def size(self):
@@ -364,13 +415,17 @@ class OversizePackage(Package):
 
 class SmallOversizePackage(OversizePackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(SmallOversizePackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._pick_pack = Decimal("4.09")
         self._weight_handling = Decimal("2.06")
         self._weight_handling_multiplier = Decimal("0.39")
         self._threshold = Decimal("2")
-        super(SmallOversizePackage, self).__init__()
         self._package_type = "SmallOversizePackage"
+        
 
     @property
     def package_type(self):
@@ -394,13 +449,17 @@ class SmallOversizePackage(OversizePackage):
     
 class MediumOversizePackage(OversizePackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(MediumOversizePackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._pick_pack = Decimal("5.20")
         self._weight_handling = Decimal("2.73")
         self._weight_handling_multiplier = Decimal("0.39")
         self._threshold = Decimal("2")
-        super(MediumOversizePackage, self).__init__()
         self._package_type = "MediumOversizePackage"
+        
 
     @property
     def package_type(self):
@@ -424,13 +483,17 @@ class MediumOversizePackage(OversizePackage):
 
 class LargeOversizePackage(OversizePackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(LargeOversizePackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._pick_pack = Decimal("8.40")
         self._weight_handling = Decimal("63.98")
         self._weight_handling_multiplier = Decimal("0.80")
         self._threshold = Decimal("90")
-        super(LargeOversizePackage, self).__init__()
         self._package_type = "LargeOversizePackage"
+        
 
     @property
     def package_type(self):
@@ -455,12 +518,15 @@ class LargeOversizePackage(OversizePackage):
 
 class SpecialOversizePackage(OversizePackage):
 
-    def __init__(self):
+    def __init__(self, height, length, width, weight,
+                  is_media=False, is_apparel=False, is_pro=False):
+        super(SpecialOversizePackage, self).__init__(
+            height, length, width, weight,
+            is_media=False, is_apparel=False, is_pro=False)
         self._pick_pack = Decimal("10.53")
         self._weight_handling = Decimal("124.58")
         self._weight_handling_multiplier = Decimal("0.92")
         self._threshold = Decimal("90")
-        super(SpecialOversizePackage, self).__init__()
         self._package_type = "SpecialOversizePackage"
 
     @property
