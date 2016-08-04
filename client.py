@@ -1,54 +1,32 @@
-from decimal import Decimal
+# AWS Lambda client function.
+from fbacalculator import FBACalculator
 
 
-def get_outbound_ship_weight(unit_weight, dimensional_weight,
-                             standard_oversize, is_media, size_tier):
-    """Calculate the outbound shipping weight
+def lambdahandler(event, context):
+    length = event['length']
+    width = event['width']
+    height = event['height']
+    weight = event['weight']
+    is_media = event.get('is_media')
+    is_apparel = event.get('is_apparel')
+    is_pro = event.get('is_pro')
+    calculator = FBACalculator(length, width, height,
+        weight, is_media, is_apparel, is_pro)
+    return calculator.fees()
 
-    Standard-Size Media
-        Packaging weight: 2 (0.125 lb.)
-        Rule: unit weight + packaging weight
-            *Round up to the nearest whole pound
-    Standard-Size Non-Media
-        Packaging weight: (1 lb. or less) 4 oz (0.25 lb.)
-        Rule: unit weight + packaging weight
-            *Round up to the nearest whole pound
-    Standard-Size Non-Media (more than 1 lb.)
-        Packaging weight: 4 oz (0.25 lb.)
-        Rule: max(unit ueight or dimensional weight) + packaging weight
-            *Round up to the nearest whole pound
-    Small, Medium, and Large Oversize
-        Packaging weight: 16 oz (1.00 lb.)
-        Rule: max(unit ueight or dimensional weight) + packaging weight
-            *Round up to the nearest whole pound
-    Special Oversize
-        Packaging weight: 16 oz (1.00 lb.)
-        Rule: unit weight + packaging weight
-            *Round up to the nearest whole pound
-    """
-    if is_media:
-        outbound = Decimal(unit_weight + PACKAGE_WEIGHT['STND_MEDIA'])
-        return outbound.quantize(Decimal('0'), rounding=ROUND_UP)
-    if standard_oversize == standard:
-        if unit_weight <= 1:
-            outbound = Decimal(unit_weight + PACKAGE_WEIGHT['STND_NON_SM'])
-        else:
-            outbound = Decimal(
-                Decimal(max(unit_weight, dimensional_weight)) +
-                Decimal(PACKAGE_WEIGHT['STND_NON_LG'])
-            )
-    else:
-        if size_tier == SPL_OVER:
-            outbound = Decimal(unit_weight + PACKAGE_WEIGHT['OVER'])
-        else:
-            outbound = Decimal(
-                Decimal(max(unit_weight, dimensional_weight)) +
-                Decimal(PACKAGE_WEIGHT['SPECIAL'])
-            )
-    return outbound.quantize(Decimal('0'), rounding=ROUND_UP)
+def handler(length, 
+            width, 
+            height, 
+            weight, 
+            is_media=False, 
+            is_apparel=False, 
+            is_pro=False):
+    calculator = FBACalculator(length, width, height,
+        weight, is_media, is_apparel, is_pro)
+    return calculator.fees()
 
 
 
 
-
+print(handler(1,1,1,1))
 
